@@ -1,5 +1,4 @@
-﻿// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
-
+﻿
 Shader "Custom/EyeBlink"
 {
     Properties
@@ -12,17 +11,10 @@ Shader "Custom/EyeBlink"
     }
     SubShader
     { 
-        Tags {"Queue" = "Transparent" "IgnoreProjector" = "True" "RenderType" = "Transparent"}
+        Cull Off ZWrite Off ZTest Always
 
         Pass
         {
-            Cull Off
-            Lighting Off
-            ZWrite Off
-            ZTest Always
-            ColorMask RGB
-            Blend SrcAlpha OneMinusSrcAlpha
-
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
@@ -64,24 +56,22 @@ Shader "Custom/EyeBlink"
 				float2 c = i.uv; 
                 float4 resultCol = float4(0,0,0,0);
                 float2 center = float2(0.5, 0.5);
+                half4 blur = col;
 
                 float p = (pow((c.x - center.x), 2) / pow(_width, 2)) + (pow((c.y - center.y), 2) / pow(_height, 2));
 
-                if (p < 0.8)
+                if (p < 1)
                 {
                     for (float i = 0; i < 10; i++) {
-                        resultCol += tex2D(_MainTex, c + float2((i / 9 - 0.5) * _blurSize, 0));
-                    }
-                    resultCol = resultCol / 10;
-                }
-                else if(p > 0.8 && p < 1)
-                {
-                    half4 blur = 0;
-                    for (float z = 0; z < 10; z++) {
-                        blur += tex2D(_MainTex, c + float2((z / 9 - 0.5) * _blurSize, 0));
+                        blur += tex2D(_MainTex, c + float2((i / 9 - 0.5) * _blurSize, 0));
                     }
                     blur = blur / 10;
 
+                    resultCol = blur;
+                }
+
+                if(p > 0.8 && p < 1)
+                {
                     float div = (1 - p)/ 0.2f;
                     p = div * 1 * _sharpness;
                     resultCol.r = (i.color.r * (1 - p)) + blur.r * p;
@@ -89,7 +79,8 @@ Shader "Custom/EyeBlink"
                     resultCol.b = (i.color.b * (1 - p)) + blur.b * p;
                     resultCol.a = i.color.a;
                 }
-                else 
+
+                if(p > 1)
                 {
                     resultCol.r = i.color.r;
                     resultCol.g = i.color.g;
