@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class AddShader : MonoBehaviour
+public class Blink : MonoBehaviour
 {
     private Material material;
     public float height = 1;
